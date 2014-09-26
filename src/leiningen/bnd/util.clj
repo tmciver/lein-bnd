@@ -66,7 +66,11 @@
 (defn project->bundle-map
   "Returns a map containing all data necessary for creating an OSGi bundle."
   [{{user-bundle-map :bnd} :osgi :as project}]
-  (merge user-bundle-map {:bundle-version (:version project)}))
+  ;; take only the stuff before the first dash (used mainly to drop "SNAPSHOT")
+  (let [ver-str (-> (:version project)
+                    (str/split #"-")
+                    first)]
+    (merge user-bundle-map {"Bundle-Version" ver-str})))
 
 (defn keyword->bundle-key
   "Converts a Clojure keyword to a form acceptable as a Manifest key."
@@ -77,35 +81,26 @@
             (apply str))
        ":"))
 
-(defn import-package-vec-to-csv
-  "Returns the given bundle map but with the \"Import-Package\" vector converted
-  to a comma-separated list string."
-  [bundle-map]
-  (if-let [pkgs (:import-package bundle-map)]
-    (if (vector? pkgs)
-      (let [csv (apply str (->> pkgs
-                                (interpose ",")))]
-        (assoc bundle-map :import-package csv))
-      bundle-map)
-    bundle-map))
+(defn update-to-csv
+  "Updates the map m so that the value of key k is converted to a CSV string."
+  [m k]
+  (update-in m [k] #(apply str (interpose "," %))))
 
 (defn bundle-map->manifest-string
   "Returns a string representing the contents of a bnd bundle file
   created from the given bundle map."
   [bundle-map]
   (when-let [[[k v] & more] (seq bundle-map)]
-    (let [v (if (= k :bundle-version)
-              (first (str/split v #"-"))
-              v)]
-      (str (keyword->bundle-key k) " " v (System/getProperty "line.separator")
-           (bundle-map->manifest-string more)))))
+    (str k ": " v (System/getProperty "line.separator")
+         (bundle-map->manifest-string more))))
 
 (defn create-tmp-bnd-properties-file
   "Creates a temporary bnd properties file from the given project map and returns its
   path."
   [project]
   (let [bundle-str (-> (project->bundle-map project)
-                       import-package-vec-to-csv
+                       (update-to-csv "Import-Package")
+                       (update-to-csv "Export-Package")
                        bundle-map->manifest-string)
         tmp-file (java.io.File/createTempFile "bnd-" ".bnd")]
     (with-open [wrtr (io/writer tmp-file)]

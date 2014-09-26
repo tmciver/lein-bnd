@@ -8,12 +8,12 @@ This plugin requires some data to be added to the project file.  Add the
 following to your project file changing the example data to suit your project:
 
 ```clojure
-:osgi {:bnd {:bundle-symbolicName 'com.example.mybundle
-               :bundle-activator 'com.example.mybundle.MyActivator
-               :export-package '(com.example.mybundle)
-               :import-package '(org.osgi.framework
-                                ;; other packages
-                                )}}
+:osgi {:bnd {"Bundle-SymbolicName" ~'com.example.mybundle
+             "Bundle-Activator" ~'com.example.mybundle.MyActivator
+             "Export-Package" [com.example.mybundle]
+             "Import-Package" [org.osgi.framework
+                               ;; other packages
+                               ]}}
 ```
 
 Run:
