@@ -63,15 +63,6 @@
                          (apply str))]
     (apply str (interpose sep [repo-path parent-path bnd-version bnd-jar-name]))))
 
-(defn project->bundle-map
-  "Returns a map containing all data necessary for creating an OSGi bundle."
-  [{{user-bundle-map :bnd} :osgi :as project}]
-  ;; take only the stuff before the first dash (used mainly to drop "SNAPSHOT")
-  (let [ver-str (-> (:version project)
-                    (str/split #"-")
-                    first)]
-    (merge user-bundle-map {"Bundle-Version" ver-str})))
-
 (defn keyword->bundle-key
   "Converts a Clojure keyword to a form acceptable as a Manifest key."
   [kw]
@@ -98,7 +89,8 @@
   "Creates a temporary bnd properties file from the given project map and returns its
   path."
   [project]
-  (let [bundle-str (-> (project->bundle-map project)
+  (let [bundle-str (-> project
+                       :bnd
                        (update-to-csv "Import-Package")
                        (update-to-csv "Export-Package")
                        bundle-map->manifest-string)
