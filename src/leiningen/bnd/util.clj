@@ -24,34 +24,25 @@
   (let [user-home (System/getProperty "user.home")]
     (apply str (interpose sep [user-home ".m2" "repository"]))))
 
-(defn project->uberjar-name
-  "Returns the name of the uberjar file as string."
+(defn uberjar-name
+  "Returns a string of the uberjar name."
   [project]
-  (->> (-> (map project [:name :version])
-                          vec
-                          (conj "standalone.jar"))
-       (interpose "-")
-       (apply str)))
+  (str (:name project) "-" (:version project) "-standalone.jar"))
 
-(defn project->uberjar-path
+(defn uberjar-path
   "Returns the path as string to the project's uberjar."
   [project]
-  (let [ubername (project->uberjar-name project)
-        uberpath (str (:target-path project) sep ubername)]
-    uberpath))
+  (str (:target-path project) sep (uberjar-name project)))
 
 (defn uberjar-exists?
   "Returns true if uberjar file exists; false otherwise."
   [project]
-  (.exists (java.io.File. (project->uberjar-path project))))
+  (.exists (java.io.File. (uberjar-path project))))
 
-(defn bundle-jar-exists?
-  "Returns true if the bundle jar file exists, false otherwise."
-  [project]
-  (.exists (java.io.File. (project->uberjar-name project))))
 
-(defn project->bnd-jar-path
-  "Returns the path as string of the bnd OSGi bundler jar."
+
+(defn bnd-jar-path
+  "Returns the path as string of the bnd OSGi bundle jar."
   [project]
   (let [repo-path (local-maven-path)
         bnd-id 'biz.aQute.bnd/bnd
@@ -99,12 +90,12 @@
       (.write wrtr bundle-str))
     (.getAbsolutePath tmp-file)))
 
-(defn project->bnd-cmd-line
+(defn bnd-cmd-line
   "Creates the full command line needed to run the bnd OSGi bundler."
   [project]
   (apply str (interpose " "
                         ["java -jar"
-                         (project->bnd-jar-path project)
+                         (bnd-jar-path project)
                          "wrap --properties"
                          (create-tmp-bnd-properties-file project)
-                         (project->uberjar-path project)])))
+                         (uberjar-path project)])))

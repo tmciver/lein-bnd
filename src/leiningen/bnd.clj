@@ -2,17 +2,17 @@
   (:use leiningen.bnd.util
         [leiningen.uberjar :only [uberjar]]))
 
-(defn- help
+(defn help
   "Prints a help message to standard out."
   []
   (println "usage: lein bnd bundle"))
 
-(defn- bundle
+(defn bundle
   "Create an OSGi bundle from the current project's jar."
   [project]
   (when (not (uberjar-exists? project))
     (uberjar project))
-  (let [cmd-line (project->bnd-cmd-line project)
+  (let [cmd-line (bnd-cmd-line project)
         process (. (Runtime/getRuntime) exec cmd-line (into-array String nil) (java.io.File. (:root project)))]
     (if (= 0 (.waitFor process))
       (read-lines (.getInputStream process))
