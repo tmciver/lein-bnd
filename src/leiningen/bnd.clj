@@ -1,6 +1,7 @@
 (ns leiningen.bnd
   (:use leiningen.bnd.util
-        [leiningen.uberjar :only [uberjar]]))
+        [leiningen.uberjar :only [uberjar]])
+  (:require [leiningen.pom :as pom]))
 
 (defn help
   "Prints a help message to standard out."
@@ -12,11 +13,13 @@
   [project]
   (when (not (uberjar-exists? project))
     (uberjar project))
-  (let [cmd-line (bnd-cmd-line project)
-        process (. (Runtime/getRuntime) exec cmd-line (into-array String nil) (java.io.File. (:root project)))]
-    (if (= 0 (.waitFor process))
-      (read-lines (.getInputStream process))
-      (read-lines (.getErrorStream process)))))
+  (if (pom/snapshot? project)
+    (println "Can't create bundle: OSGi does not support snapshot versions.")
+    (let [cmd-line (bnd-cmd-line project)
+          process (. (Runtime/getRuntime) exec cmd-line (into-array String nil) (java.io.File. (:root project)))]
+      (if (= 0 (.waitFor process))
+        (read-lines (.getInputStream process))
+        (read-lines (.getErrorStream process))))))
 
 (defn ^{:subtasks [#'bundle #'help]}
   bnd
