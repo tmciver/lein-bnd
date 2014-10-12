@@ -39,8 +39,6 @@
   [project]
   (.exists (java.io.File. (uberjar-path project))))
 
-
-
 (defn bnd-jar-path
   "Returns the path as string of the bnd OSGi bundle jar."
   [project]
@@ -76,12 +74,21 @@
     (str k ": " v (System/getProperty "line.separator")
          (bundle-map->manifest-string more))))
 
+(defn- update-version-if-absent-fn
+  "Returns a function that takes a map as input and updates the value of
+  \"Bundle-Version\" to the project version if it does not already have a value."
+  [project]
+  (fn [m]
+    (merge-with #(or %1 %2) m {"Bundle-Version" (:version project)})))
+
 (defn create-tmp-bnd-properties-file
   "Creates a temporary bnd properties file from the given project map and returns its
   path."
   [project]
-  (let [bundle-str (-> project
+  (let [update-version (update-version-if-absent-fn project)
+        bundle-str (-> project
                        :bnd
+                       update-version
                        (update-to-csv "Import-Package")
                        (update-to-csv "Export-Package")
                        bundle-map->manifest-string)
