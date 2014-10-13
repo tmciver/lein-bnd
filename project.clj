@@ -1,4 +1,4 @@
-(defproject lein-bnd "0.1.0-SNAPSHOT"
+(defproject lein-bnd "0.1.0"
   :description "A Leiningen plugin to facilitate creation of an OSGi bundle."
   :url "http://example.com/FIXME"
   :license {:name "Eclipse Public License"
